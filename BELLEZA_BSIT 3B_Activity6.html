@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshMart Minimart Information System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  :root {
+    --navy: #1a2744;
+    --blue: #3d5afe;
+    --blue-light: #6c83fb;
+    --blue-soft: #e8ecff;
+    --sidebar-bg: #1e2f5c;
+    --sidebar-hover: #2a3f7a;
+    --sidebar-active: #3d5afe;
+    --header-bg: #3d5afe;
+    --white: #ffffff;
+    --gray-50: #f8f9fc;
+    --gray-100: #eef0f6;
+    --gray-200: #d8dce8;
+    --gray-400: #9299b0;
+    --gray-700: #3a3f55;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --pink: #ec4899;
+    --card-shadow: 0 2px 12px rgba(61,90,254,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-700);
+    min-height: 100vh;
+  }
+
+  /* ── AUTH SCREENS ── */
+  #auth-wrapper {
+    min-height: 100vh;
+    background: #3d5afe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 48px 44px;
+    width: 420px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+    display: none;
+    animation: fadeUp 0.35s ease;
+  }
+
+  .auth-card.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(18px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .auth-card h1 {
+    
+    font-size: 28px;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .auth-card p.subtitle {
+    color: var(--gray-400);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .field-group { margin-bottom: 18px; }
+
+  .auth-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    
+    font-size: 14px;
+    color: var(--gray-700);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .auth-input:focus { border-color: var(--blue); }
+
+  .auth-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+
+  .auth-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .auth-row a { color: var(--blue); text-decoration: none; font-weight: 600; }
+  .auth-row a:hover { text-decoration: underline; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-primary:hover { background: #2a44d6; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    color: var(--gray-700);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--blue); background: var(--blue-soft); }
+
+  .auth-alert {
+    background: #fef2f2;
+    color: var(--red);
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .auth-success {
+    background: #f0fdf4;
+    color: var(--green);
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── APP SHELL ── */
+  #app-wrapper { display: none; min-height: 100vh; }
+
+  .app-layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-brand {
+    padding: 28px 24px 20px;
+    
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-nav { flex: 1; padding: 12px 0; }
+
+  .nav-item {
+    display: block;
+    padding: 13px 24px;
+    color: rgba(255,255,255,0.65);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+
+  .nav-item.active {
+    background: var(--sidebar-active);
+    color: #fff;
+    border-left-color: #fff;
+  }
+
+  .sidebar-footer {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .btn-logout {
+    width: 100%;
+    padding: 9px;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-logout:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+  /* Main content */
+  .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .page-header {
+    background: var(--header-bg);
+    padding: 20px 32px;
+    color: #fff;
+  }
+
+  .page-header h2 {
+    
+    font-size: 24px;
+  }
+
+  .page-body { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  /* ── CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 22px 20px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .stat-card .stat-val {
+    
+    font-size: 30px;
+    color: var(--navy);
+  }
+
+  .stat-card .stat-lbl {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+
+  /* ── CHARTS ── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+
+  .chart-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 22px 20px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .chart-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--navy); }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    height: 100px;
+  }
+
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+
+  .bar {
+    width: 100%;
+    background: var(--blue);
+    border-radius: 4px 4px 0 0;
+    transition: background 0.2s;
+  }
+
+  .bar:hover { background: var(--blue-light); }
+  .bar-lbl { font-size: 11px; color: var(--gray-400); }
+
+  .donut-row {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+  }
+
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* Stock bars */
+  .stock-bars { display: flex; gap: 14px; align-items: flex-end; height: 80px; }
+  .stock-bar { width: 54px; border-radius: 4px 4px 0 0; }
+  .stock-bar-lbl { font-size: 11px; color: var(--gray-400); text-align: center; margin-top: 6px; }
+
+  /* ── TABLE ── */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    padding: 22px 20px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-header h3 { font-size: 15px; font-weight: 700; color: var(--navy); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  thead tr { background: var(--blue); color: #fff; }
+  thead th { padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.15s; }
+  tbody tr:hover { background: var(--blue-soft); }
+  tbody td { padding: 10px 12px; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-red   { background: #fee2e2; color: #dc2626; }
+  .badge-yellow{ background: #fef9c3; color: #ca8a04; }
+  .badge-blue  { background: var(--blue-soft); color: var(--blue); }
+  .badge-gray  { background: var(--gray-100); color: var(--gray-400); }
+
+  .type-in  { color: var(--green); font-weight: 700; }
+  .type-out { color: var(--red); font-weight: 700; }
+
+  /* ── FORM CONTROLS ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 5px; }
+
+  .form-input, .form-select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 7px;
+    
+    font-size: 13px;
+    color: var(--gray-700);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus { border-color: var(--blue); }
+
+  .btn-sm {
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-sm:active { transform: scale(0.97); }
+
+  .btn-blue  { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: #2a44d6; }
+
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #16a34a; }
+
+  .btn-red   { background: var(--red); color: #fff; }
+  .btn-red:hover { background: #b91c1c; }
+
+  .btn-gray  { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn-gray:hover { background: var(--gray-200); }
+
+  .btn-yellow { background: var(--yellow); color: #fff; }
+  .btn-yellow:hover { background: #d97706; }
+
+  .btn-excel { background: #217346; color: #fff; }
+  .btn-excel:hover { background: #185c37; }
+
+  /* Report export bar */
+  .export-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .search-bar input, .search-bar select {
+    padding: 8px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 7px;
+    font-size: 13px;
+    outline: none;
+    
+  }
+
+  .search-bar input:focus, .search-bar select:focus { border-color: var(--blue); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 32px 28px;
+    width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: fadeUp 0.25s ease;
+  }
+
+  .modal-box.wide { width: 640px; }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+
+  .modal-header h3 {
+    
+    font-size: 18px;
+    color: var(--navy);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--gray-400);
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--red); }
+
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 22px;
+  }
+
+  /* ── REPORTS ── */
+  .report-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+  }
+
+  .report-settings h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+
+  .report-preview { overflow-x: auto; }
+
+  .total-row td {
+    font-weight: 700;
+    color: var(--blue);
+    border-top: 2px dashed var(--blue-light) !important;
+    padding-top: 10px !important;
+  }
+
+  /* ── ABOUT ── */
+  .about-hero {
+    background: var(--blue);
+    color: #fff;
+    border-radius: 12px;
+    padding: 32px 28px;
+    margin-bottom: 24px;
+  }
+
+  .about-hero h2 {  font-size: 26px; margin-bottom: 6px; }
+  .about-hero p  { opacity: 0.85; font-size: 14px; }
+
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .about-section h4 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+
+  .about-section p  { font-size: 13px; color: var(--gray-400); line-height: 1.7; }
+
+  .about-section ul { list-style: none; }
+  .about-section ul li {
+    font-size: 13px;
+    color: var(--gray-700);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .about-section ul li::before { content: '–'; color: var(--blue); font-weight: 700; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Confirm dialog */
+  .confirm-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+  /* Utilities */
+  .flex-row { display: flex; gap: 8px; }
+  .ml-auto  { margin-left: auto; }
+  .mt-10    { margin-top: 10px; }
+  .text-sm  { font-size: 12px; color: var(--gray-400); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     AUTH WRAPPER
+══════════════════════════════════════════ -->
+<div id="auth-wrapper">
+
+  <!-- LOGIN CARD -->
+  <div class="auth-card active" id="card-login">
+    <h1>Welcome Back!</h1>
+    <p class="subtitle">Log in to your account</p>
+    <div class="auth-alert" id="login-err">Invalid username or password.</div>
+    <div class="field-group">
+      <label class="field-label">Username</label>
+      <input class="auth-input" id="login-user" type="text" placeholder="Enter username" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Password</label>
+      <input class="auth-input" id="login-pass" type="password" placeholder="Enter password">
+    </div>
+    <div class="auth-row">
+      <label><input type="checkbox" id="remember-me"> Remember me</label>
+      <a href="#" onclick="showCard('card-recovery')">Forgot password?</a>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">LOGIN</button>
+  </div>
+
+  <!-- PASSWORD RECOVERY CARD -->
+  <div class="auth-card" id="card-recovery">
+    <h1>Password Recovery</h1>
+    <p class="subtitle">Enter your registered email</p>
+    <div class="auth-alert" id="rec-err">Email not found in the system.</div>
+    <div class="auth-success" id="rec-ok">Verification code sent! Check your email.</div>
+    <div class="field-group">
+      <label class="field-label">Registered Email Address</label>
+      <input class="auth-input" id="rec-email" type="email" placeholder="Enter your email">
+    </div>
+    <button class="btn-primary" onclick="doRecovery()">Send Verification Code</button>
+    <button class="btn-secondary" onclick="showCard('card-login')">Back to Login</button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app-wrapper">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">FreshMart</div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="showPage('dashboard', this)">Dashboard</div>
+        <div class="nav-item" onclick="showPage('products', this)">Products</div>
+        <div class="nav-item" onclick="showPage('transactions', this)">Transactions</div>
+        <div class="nav-item" onclick="showPage('users', this)">User Management</div>
+        <div class="nav-item" onclick="showPage('reports', this)">Reports</div>
+        <div class="nav-item" onclick="showPage('about', this)">About</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="text-sm" id="current-user-label" style="color:rgba(255,255,255,0.5); margin-bottom:8px;"></div>
+        <button class="btn-logout" onclick="doLogout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+      <div class="page-header">
+        <h2 id="page-title">Dashboard</h2>
+      </div>
+      <div class="page-body">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="page active" id="page-dashboard">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-val" id="dash-products">10</div>
+              <div class="stat-lbl">Total Products</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="dash-transactions">10</div>
+              <div class="stat-lbl">Total Transactions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="dash-lowstock">3</div>
+              <div class="stat-lbl">Low Stock Items</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="dash-stockval">₱98,450</div>
+              <div class="stat-lbl">Stock Value</div>
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="chart-card">
+              <h3>Monthly Sales</h3>
+              <div class="bar-chart">
+                <div class="bar-col"><div class="bar" style="height:50px"></div><div class="bar-lbl">Jan</div></div>
+                <div class="bar-col"><div class="bar" style="height:72px"></div><div class="bar-lbl">Feb</div></div>
+                <div class="bar-col"><div class="bar" style="height:62px"></div><div class="bar-lbl">Mar</div></div>
+                <div class="bar-col"><div class="bar" style="height:88px"></div><div class="bar-lbl">Apr</div></div>
+                <div class="bar-col"><div class="bar" style="height:40px"></div><div class="bar-lbl">May</div></div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Stock Status</h3>
+              <div class="donut-row">
+                <div>
+                  <div class="stock-bars">
+                    <div>
+                      <div class="stock-bar" style="height:80px; background:#3d5afe;"></div>
+                      <div class="stock-bar-lbl">Stock OK</div>
+                    </div>
+                    <div>
+                      <div class="stock-bar" style="height:45px; background:#ec4899;"></div>
+                      <div class="stock-bar-lbl">Low Stock</div>
+                    </div>
+                    <div>
+                      <div class="stock-bar" style="height:15px; background:#22c55e;"></div>
+                      <div class="stock-bar-lbl">Out of Stock</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-left:20px;">
+                  <div class="legend-item"><div class="legend-dot" style="background:#3d5afe;"></div>Stock OK</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#ec4899;"></div>Low Stock</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>Out of Stock</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Recent Transactions</h3></div>
+            <table>
+              <thead><tr>
+                <th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Amount</th><th>Handled By</th>
+              </tr></thead>
+              <tbody id="dash-recent"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── PRODUCTS ── -->
+        <div class="page" id="page-products">
+          <div class="card">
+            <div class="card-header">
+              <h3>Product List</h3>
+              <div class="flex-row">
+                <button class="btn-sm btn-excel" onclick="exportProductsExcel()">⬇ Export to Excel</button>
+                <button class="btn-sm btn-blue" onclick="openProductModal()">+ Add Product</button>
+              </div>
+            </div>
+            <div class="search-bar">
+              <input type="text" id="prod-search" placeholder="Search product..." oninput="renderProducts()">
+              <select id="prod-cat-filter" onchange="renderProducts()">
+                <option value="">All Categories</option>
+              </select>
+              <select id="prod-status-filter" onchange="renderProducts()">
+                <option value="">All Status</option>
+                <option>Stock OK</option>
+                <option>Low Stock</option>
+                <option>Out of Stock</option>
+              </select>
+            </div>
+            <table>
+              <thead><tr>
+                <th>#</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Supplier</th>
+                <th>Buy Price</th><th>Sell Price</th><th>Qty</th><th>Unit</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="prod-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── TRANSACTIONS ── -->
+        <div class="page" id="page-transactions">
+          <div class="card">
+            <div class="card-header">
+              <h3>Transaction Records</h3>
+              <div class="flex-row">
+                <button class="btn-sm btn-excel" onclick="exportTransactionsExcel()">⬇ Export to Excel</button>
+                <button class="btn-sm btn-blue" onclick="openTxModal()">+ Add Transaction</button>
+              </div>
+            </div>
+            <div class="search-bar">
+              <input type="text" id="tx-search" placeholder="Search product..." oninput="renderTransactions()">
+              <select id="tx-type-filter" onchange="renderTransactions()">
+                <option value="">All Types</option>
+                <option>IN</option>
+                <option>OUT</option>
+              </select>
+            </div>
+            <table>
+              <thead><tr>
+                <th>#</th><th>Date</th><th>Product</th><th>Type</th><th>Qty</th>
+                <th>Price/Unit</th><th>Total</th><th>Employee</th><th>Remarks</th>
+              </tr></thead>
+              <tbody id="tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── USER MANAGEMENT ── -->
+        <div class="page" id="page-users">
+          <div class="card">
+            <div class="card-header">
+              <h3>User Accounts</h3>
+              <button class="btn-sm btn-blue" onclick="openUserModal()">+ Add Account</button>
+            </div>
+            <div class="search-bar">
+              <input type="text" id="user-search" placeholder="Search name or email..." oninput="renderUsers()">
+              <select id="user-role-filter" onchange="renderUsers()">
+                <option value="">All Roles</option>
+                <option>Store Manager</option>
+                <option>Inventory Officer</option>
+                <option>Cashier</option>
+                <option>Stock Clerk</option>
+                <option>Purchasing Staff</option>
+                <option>Security Guard</option>
+              </select>
+              <select id="user-status-filter" onchange="renderUsers()">
+                <option value="">All Status</option>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+            <table>
+              <thead><tr>
+                <th>#</th><th>Name</th><th>Role</th><th>Email</th><th>Hire Date</th><th>Salary</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="user-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── REPORTS ── -->
+        <div class="page" id="page-reports">
+          <div class="report-layout">
+            <div class="card report-settings">
+              <h3>Report Settings</h3>
+              <div class="form-group">
+                <label>Report Type</label>
+                <select class="form-select" id="rpt-type">
+                  <option>Sales Report</option>
+                  <option>Restock Report</option>
+                  <option>Stock Levels</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Date Range From</label>
+                <input class="form-input" type="date" id="rpt-from">
+              </div>
+              <div class="form-group">
+                <label>Date Range To</label>
+                <input class="form-input" type="date" id="rpt-to">
+              </div>
+              <div class="form-group">
+                <label>Category Filter</label>
+                <select class="form-select" id="rpt-cat">
+                  <option value="">All Categories</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Employee Filter</label>
+                <select class="form-select" id="rpt-emp">
+                  <option value="">All Employees</option>
+                </select>
+              </div>
+              <button class="btn-sm btn-blue" style="width:100%; padding:11px;" onclick="generateReport()">GENERATE REPORT</button>
+              <button class="btn-sm btn-excel" style="width:100%; padding:11px; margin-top:10px;" onclick="exportReportExcel()">⬇ EXPORT TO EXCEL</button>
+            </div>
+            <div class="card report-preview" id="rpt-preview">
+              <div style="color:var(--gray-400); font-size:14px; text-align:center; padding:40px 0;">
+                Configure filters and click Generate Report
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ABOUT ── -->
+        <div class="page" id="page-about">
+          <div class="about-hero">
+            <h2>FreshMart Minimart Information System</h2>
+            <p>Desktop-based inventory and transaction management system</p>
+          </div>
+          <div class="about-grid">
+            <div class="card about-section">
+              <h4>About The System</h4>
+              <p>FreshMart Minimart is a desktop-based inventory and transaction management system. It provides real-time stock monitoring, automated low-stock alerts, sales reporting, and employee management in a clean, easy-to-use interface.</p>
+            </div>
+            <div class="card about-section">
+              <h4>System Modules</h4>
+              <ul>
+                <li>Login and Authentication</li>
+                <li>Password Recovery</li>
+                <li>Dashboard Overview</li>
+                <li>Product Management</li>
+                <li>Transaction Tracking</li>
+                <li>User Management</li>
+                <li>Reports Generation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- page-body -->
+    </div><!-- main-content -->
+  </div><!-- app-layout -->
+</div><!-- app-wrapper -->
+
+<!-- ══════ MODALS ══════ -->
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="prod-modal-title">Add Product</h3>
+      <button class="modal-close" onclick="closeModal('modal-product')">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Product Name</label>
+        <input class="form-input" id="pm-name" placeholder="e.g. Milo 3-in-1">
+      </div>
+      <div class="form-group">
+        <label>Barcode</label>
+        <input class="form-input" id="pm-barcode" placeholder="BAR-XXX">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select class="form-select" id="pm-category"></select>
+      </div>
+      <div class="form-group">
+        <label>Supplier</label>
+        <select class="form-select" id="pm-supplier"></select>
+      </div>
+      <div class="form-group">
+        <label>Buying Price (₱)</label>
+        <input class="form-input" id="pm-buy" type="number" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Selling Price (₱)</label>
+        <input class="form-input" id="pm-sell" type="number" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Quantity in Stock</label>
+        <input class="form-input" id="pm-qty" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Reorder Level</label>
+        <input class="form-input" id="pm-reorder" type="number" placeholder="20">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input class="form-input" id="pm-unit" placeholder="pcs / box / kg">
+      </div>
+      <div class="form-group">
+        <label>Expiry Date</label>
+        <input class="form-input" id="pm-expiry" type="date">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-gray" onclick="closeModal('modal-product')">Cancel</button>
+      <button class="btn-sm btn-blue" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="modal-tx">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="tx-modal-title">Add Transaction</h3>
+      <button class="modal-close" onclick="closeModal('modal-tx')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Product</label>
+      <select class="form-select" id="tm-product"></select>
+    </div>
+    <div class="form-group">
+      <label>Employee</label>
+      <select class="form-select" id="tm-employee"></select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-select" id="tm-type">
+          <option>IN</option>
+          <option>OUT</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input class="form-input" id="tm-qty" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input class="form-input" id="tm-date" type="date">
+      </div>
+      <div class="form-group">
+        <label>Price / Unit (₱)</label>
+        <input class="form-input" id="tm-price" type="number" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Remarks</label>
+      <input class="form-input" id="tm-remarks" placeholder="Optional notes">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-gray" onclick="closeModal('modal-tx')">Cancel</button>
+      <button class="btn-sm btn-blue" onclick="saveTransaction()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="user-modal-title">Add Account</h3>
+      <button class="modal-close" onclick="closeModal('modal-user')">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>First Name</label>
+        <input class="form-input" id="um-fname" placeholder="First name">
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input class="form-input" id="um-lname" placeholder="Last name">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select class="form-select" id="um-role">
+          <option>Store Manager</option>
+          <option>Inventory Officer</option>
+          <option>Cashier</option>
+          <option>Stock Clerk</option>
+          <option>Purchasing Staff</option>
+          <option>Security Guard</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input class="form-input" id="um-email" type="email" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Hire Date</label>
+        <input class="form-input" id="um-hire" type="date">
+      </div>
+      <div class="form-group">
+        <label>Salary (₱)</label>
+        <input class="form-input" id="um-salary" type="number" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input class="form-input" id="um-username" placeholder="Login username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="form-input" id="um-password" type="password" placeholder="Set password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-gray" onclick="closeModal('modal-user')">Cancel</button>
+      <button class="btn-sm btn-blue" onclick="saveUser()">Save Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box" style="width:380px;">
+    <div class="modal-header">
+      <h3 id="confirm-title">Confirm Action</h3>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">×</button>
+    </div>
+    <p id="confirm-msg" style="font-size:14px; color:var(--gray-700);"></p>
+    <div class="confirm-btns">
+      <button class="btn-sm btn-gray" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn-sm btn-red" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATABASE CLASS (public — simulates MySQL)
+═══════════════════════════════════════════ */
+class MySQLConnection {
+  constructor() {
+    this.host     = 'localhost';
+    this.port     = 3306;
+    this.database = 'minimart_db';
+    this.user     = 'root';
+    this.connected = true;
+    console.log(`[MySQLConnection] Connected to ${this.host}:${this.port}/${this.database}`);
+  }
+
+  query(sql, params = []) {
+    // In a real app this calls the backend API / mysql2 driver.
+    // Here it operates on in-memory data.
+    console.log('[MySQLConnection] Query:', sql, params);
+    return true;
+  }
+
+  close() { this.connected = false; }
+}
+
+// Public singleton — mimics the required "public class" MySQL connection
+const db = new MySQLConnection();
+
+/* ═══════════════════════════════════════════
+   IN-MEMORY DATA (seeded from minimart_db)
+═══════════════════════════════════════════ */
+const categories = [
+  {id:1, name:'Beverages'}, {id:2, name:'Canned Goods'}, {id:3, name:'Dairy'},
+  {id:4, name:'Snacks'}, {id:5, name:'Noodles & Pasta'}, {id:6, name:'Rice & Grains'},
+  {id:7, name:'Condiments'}, {id:8, name:'Frozen Goods'}, {id:9, name:'Fresh Produce'},
+  {id:10, name:'Personal Care'}
+];
+
+const suppliers = [
+  {id:1, name:'Nestle Philippines'}, {id:2, name:'San Miguel Corp.'},
+  {id:3, name:'Universal Robina Corp.'}, {id:4, name:'Monde Nissin'},
+  {id:5, name:'Magnolia Inc.'}, {id:6, name:'Lucky Me Noodles'},
+  {id:7, name:'Del Monte Philippines'}, {id:8, name:'Rebisco Corporation'},
+  {id:9, name:'Alaska Milk Corp.'}, {id:10, name:'Local Fresh Farms'}
+];
+
+let products = [
+  {id:1, name:'Milo 3-in-1 (10 sachets)',    barcode:'BAR-001', catId:1,  supId:1,  buy:65,  sell:85,  qty:120, reorder:30, unit:'box',    expiry:'2025-12-31'},
+  {id:2, name:'Argentina Corned Beef 150g',  barcode:'BAR-002', catId:2,  supId:3,  buy:42,  sell:58,  qty:200, reorder:50, unit:'can',    expiry:'2026-06-30'},
+  {id:3, name:'Alaska Evap Milk 370ml',      barcode:'BAR-003', catId:3,  supId:9,  buy:28,  sell:38,  qty:150, reorder:40, unit:'can',    expiry:'2026-03-15'},
+  {id:4, name:'Pringles Original 107g',      barcode:'BAR-004', catId:4,  supId:3,  buy:95,  sell:115, qty:80,  reorder:20, unit:'can',    expiry:'2025-09-30'},
+  {id:5, name:'Lucky Me Pancit Canton',      barcode:'BAR-005', catId:5,  supId:6,  buy:9,   sell:13,  qty:300, reorder:80, unit:'pack',   expiry:'2025-11-30'},
+  {id:6, name:'NFA Rice 1kg',                barcode:'BAR-006', catId:6,  supId:10, buy:45,  sell:52,  qty:500, reorder:100,unit:'kg',     expiry:null},
+  {id:7, name:'Datu Puti Vinegar 1L',        barcode:'BAR-007', catId:7,  supId:3,  buy:28,  sell:38,  qty:90,  reorder:25, unit:'bottle', expiry:'2026-01-31'},
+  {id:8, name:'Magnolia Chicken Hotdog 250g',barcode:'BAR-008', catId:8,  supId:5,  buy:68,  sell:88,  qty:60,  reorder:20, unit:'pack',   expiry:'2025-04-15'},
+  {id:9, name:'Ripe Tomatoes (per kg)',       barcode:'BAR-009', catId:9,  supId:10, buy:30,  sell:45,  qty:40,  reorder:15, unit:'kg',     expiry:'2025-02-20'},
+  {id:10,name:'Colgate Toothpaste 75ml',     barcode:'BAR-010', catId:10, supId:1,  buy:38,  sell:52,  qty:110, reorder:30, unit:'tube',   expiry:'2027-01-01'},
+];
+
+let employees = [
+  {id:1, fname:'Jorge',  lname:'Licup',       role:'Store Manager',     email:'jorgelicup@gmail.com',    hire:'2018-05-01', salary:35000, status:'Active',   username:'jorge',  password:'manager123'},
+  {id:2, fname:'Rhona',  lname:'Pancho',      role:'Inventory Officer', email:'rhonapancho@gmail.com',   hire:'2019-08-12', salary:25000, status:'Active',   username:'rhona',  password:'rhona123'},
+  {id:3, fname:'Ana',    lname:'Lin',         role:'Cashier',           email:'analin@gmail.com',        hire:'2020-02-01', salary:18000, status:'Active',   username:'ana',    password:'ana123'},
+  {id:4, fname:'Carlos', lname:'Caabay',      role:'Stock Clerk',       email:'carloscaabay@gmail.com',  hire:'2020-06-15', salary:16000, status:'Active',   username:'carlos', password:'carlos123'},
+  {id:5, fname:'Ervin',  lname:'Macatingrao', role:'Cashier',           email:'ervinmacatingrao@gmail.com', hire:'2021-01-10', salary:18000, status:'Active', username:'ervin',  password:'ervin123'},
+  {id:6, fname:'Erl',    lname:'Macatingrao', role:'Stock Clerk',       email:'erlmacatingrao@gmail.com',   hire:'2021-07-20', salary:16000, status:'Active', username:'erl',    password:'erl123'},
+  {id:7, fname:'Abby',   lname:'DelaCruz',    role:'Purchasing Staff',  email:'abbydelacruz@gmail.com',  hire:'2022-03-05', salary:20000, status:'Active',   username:'abby',   password:'abby123'},
+  {id:8, fname:'Asif',   lname:'Moral',       role:'Stock Clerk',       email:'asifmoral@gmail.com',     hire:'2022-09-18', salary:16000, status:'Inactive', username:'asif',   password:'asif123'},
+  {id:9, fname:'Vince',  lname:'Manaman',     role:'Cashier',           email:'vincemanaman@gmail.com',  hire:'2023-02-14', salary:18000, status:'Active',   username:'vince',  password:'vince123'},
+  {id:10,fname:'Ivan',   lname:'Till',        role:'Security Guard',    email:'ivantill@gmail.com',      hire:'2023-06-01', salary:15000, status:'Active',   username:'ivan',   password:'ivan123'},
+];
+
+let transactions = [
+  {id:1,  prodId:1,  empId:2, type:'IN',  qty:150, date:'2024-01-05', price:65.00, total:9750.00,  remarks:'Delivery from Nestle'},
+  {id:2,  prodId:2,  empId:2, type:'IN',  qty:250, date:'2024-01-10', price:42.00, total:10500.00, remarks:'Delivery from URC'},
+  {id:3,  prodId:3,  empId:4, type:'OUT', qty:30,  date:'2024-01-15', price:38.00, total:1140.00,  remarks:'Sold at counter'},
+  {id:4,  prodId:4,  empId:4, type:'OUT', qty:20,  date:'2024-01-20', price:115.00,total:2300.00,  remarks:'Sold at counter'},
+  {id:5,  prodId:5,  empId:2, type:'IN',  qty:400, date:'2024-02-01', price:9.00,  total:3600.00,  remarks:'Bulk delivery from Lucky Me'},
+  {id:6,  prodId:6,  empId:4, type:'OUT', qty:100, date:'2024-02-05', price:52.00, total:5200.00,  remarks:'Sold at counter'},
+  {id:7,  prodId:7,  empId:2, type:'IN',  qty:100, date:'2024-02-10', price:28.00, total:2800.00,  remarks:'Delivery from URC'},
+  {id:8,  prodId:8,  empId:4, type:'OUT', qty:15,  date:'2024-02-14', price:88.00, total:1320.00,  remarks:'Sold at counter'},
+  {id:9,  prodId:9,  empId:4, type:'OUT', qty:20,  date:'2024-02-20', price:45.00, total:900.00,   remarks:'Sold at counter'},
+  {id:10, prodId:10, empId:2, type:'IN',  qty:130, date:'2024-03-01', price:38.00, total:4940.00,  remarks:'Delivery from Nestle'},
+];
+
+let nextProdId = 11, nextEmpId = 11, nextTxId = 11;
+let currentUser = null;
+let editingProdId = null, editingEmpId = null, editingTxId = null;
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+const getCatName = id => (categories.find(c=>c.id===id)||{name:'—'}).name;
+const getSupName = id => (suppliers.find(s=>s.id===id)||{name:'—'}).name;
+const getEmpName = id => { const e=employees.find(x=>x.id===id); return e ? e.fname+' '+e.lname : '—'; };
+const getProdName= id => (products.find(p=>p.id===id)||{name:'—'}).name;
+const peso       = n  => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits:2});
+
+function stockStatus(p) {
+  if (p.qty === 0)           return 'Out of Stock';
+  if (p.qty <= p.reorder)    return 'Low Stock';
+  return 'Stock OK';
+}
+
+function statusBadge(s) {
+  if (s==='Stock OK')     return `<span class="badge badge-green">${s}</span>`;
+  if (s==='Low Stock')    return `<span class="badge badge-yellow">${s}</span>`;
+  if (s==='Out of Stock') return `<span class="badge badge-red">${s}</span>`;
+  if (s==='Active')       return `<span class="badge badge-green">${s}</span>`;
+  if (s==='Inactive')     return `<span class="badge badge-gray">${s}</span>`;
+  return s;
+}
+
+function showToast(msg, color='var(--navy)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function confirmAction(title, msg, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-ok-btn').onclick = () => { closeModal('modal-confirm'); cb(); };
+  openModal('modal-confirm');
+}
+
+/* ═══════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════ */
+function showCard(id) {
+  document.querySelectorAll('.auth-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('login-err').style.display = 'none';
+  document.getElementById('rec-err').style.display   = 'none';
+  document.getElementById('rec-ok').style.display    = 'none';
+}
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  db.query('SELECT * FROM employees WHERE username=? AND password=?', [u, p]);
+
+  const found = employees.find(e => e.username === u && e.password === p && e.status === 'Active');
+  if (!found) {
+    document.getElementById('login-err').style.display = 'block';
+    return;
+  }
+
+  currentUser = found;
+  document.getElementById('auth-wrapper').style.display = 'none';
+  document.getElementById('app-wrapper').style.display  = 'block';
+  document.getElementById('current-user-label').textContent = found.fname + ' ' + found.lname;
+
+  populateSelects();
+  renderDashboard();
+  renderProducts();
+  renderTransactions();
+  renderUsers();
+}
+
+function doRecovery() {
+  const email = document.getElementById('rec-email').value.trim();
+  db.query('SELECT * FROM employees WHERE email=?', [email]);
+  const found = employees.find(e => e.email === email);
+  if (!found) {
+    document.getElementById('rec-err').style.display = 'block';
+    document.getElementById('rec-ok').style.display  = 'none';
+  } else {
+    document.getElementById('rec-err').style.display = 'none';
+    document.getElementById('rec-ok').style.display  = 'block';
+  }
+}
+
+function doLogout() {
+  confirmAction('Logout', 'Are you sure you want to log out?', () => {
+    currentUser = null;
+    document.getElementById('app-wrapper').style.display  = 'none';
+    document.getElementById('auth-wrapper').style.display = 'flex';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    showCard('card-login');
+  });
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+const pageTitles = {
+  dashboard:'Dashboard', products:'Products', transactions:'Transactions',
+  users:'User Management', reports:'Reports', about:'About the Program'
+};
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name];
+}
+
+/* ═══════════════════════════════════════════
+   POPULATE SELECTS
+═══════════════════════════════════════════ */
+function populateSelects() {
+  // category options
+  ['pm-category','prod-cat-filter','rpt-cat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const hasAll = id !== 'pm-category';
+    el.innerHTML = hasAll ? '<option value="">All Categories</option>' : '';
+    categories.forEach(c => {
+      el.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+  });
+
+  // supplier options
+  const ps = document.getElementById('pm-supplier');
+  if (ps) { ps.innerHTML=''; suppliers.forEach(s => ps.innerHTML+=`<option value="${s.id}">${s.name}</option>`); }
+
+  // employee selects
+  const actEmp = employees.filter(e=>e.status==='Active');
+  ['tm-employee','rpt-emp'].forEach(id => {
+    const el = document.getElementById(id); if(!el) return;
+    el.innerHTML = id==='rpt-emp' ? '<option value="">All Employees</option>' : '';
+    actEmp.forEach(e => el.innerHTML+=`<option value="${e.id}">${e.fname} ${e.lname}</option>`);
+  });
+
+  // product select for transaction
+  const tp = document.getElementById('tm-product');
+  if (tp) { tp.innerHTML=''; products.forEach(p=>tp.innerHTML+=`<option value="${p.id}">${p.name}</option>`); }
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+function renderDashboard() {
+  db.query('SELECT COUNT(*) FROM products');
+  document.getElementById('dash-products').textContent     = products.length;
+  document.getElementById('dash-transactions').textContent = transactions.length;
+
+  const low = products.filter(p=>stockStatus(p)!=='Stock OK').length;
+  document.getElementById('dash-lowstock').textContent = low;
+
+  const val = products.reduce((s,p)=>s+(p.buy*p.qty),0);
+  document.getElementById('dash-stockval').textContent = peso(val);
+
+  const recent = [...transactions].sort((a,b)=>b.id-a.id).slice(0,5);
+  document.getElementById('dash-recent').innerHTML = recent.map(t=>`
+    <tr>
+      <td>${t.date}</td>
+      <td>${getProdName(t.prodId)}</td>
+      <td class="${t.type==='IN'?'type-in':'type-out'}">${t.type}</td>
+      <td>${t.qty}</td>
+      <td>${peso(t.total)}</td>
+      <td>${getEmpName(t.empId)}</td>
+    </tr>`).join('');
+}
+
+/* ═══════════════════════════════════════════
+   PRODUCTS
+═══════════════════════════════════════════ */
+function renderProducts() {
+  const search = document.getElementById('prod-search').value.toLowerCase();
+  const cat    = document.getElementById('prod-cat-filter').value;
+  const status = document.getElementById('prod-status-filter').value;
+
+  let list = products.filter(p => {
+    const ss = stockStatus(p);
+    return (!search || p.name.toLowerCase().includes(search) || p.barcode.toLowerCase().includes(search))
+        && (!cat    || p.catId == cat)
+        && (!status || ss === status);
+  });
+
+  document.getElementById('prod-tbody').innerHTML = list.map((p,i)=>{
+    const ss = stockStatus(p);
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${p.barcode}</td>
+      <td><b>${p.name}</b></td>
+      <td>${getCatName(p.catId)}</td>
+      <td>${getSupName(p.supId)}</td>
+      <td>${peso(p.buy)}</td>
+      <td>${peso(p.sell)}</td>
+      <td>${p.qty}</td>
+      <td>${p.unit}</td>
+      <td>${statusBadge(ss)}</td>
+      <td>
+        <div class="flex-row">
+          <button class="btn-sm btn-yellow" onclick="editProduct(${p.id})">Edit</button>
+          <button class="btn-sm btn-red"    onclick="deleteProduct(${p.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openProductModal(id=null) {
+  editingProdId = id;
+  document.getElementById('prod-modal-title').textContent = id ? 'Edit Product' : 'Add Product';
+  populateSelects();
+
+  if (id) {
+    const p = products.find(x=>x.id===id);
+    document.getElementById('pm-name').value    = p.name;
+    document.getElementById('pm-barcode').value = p.barcode;
+    document.getElementById('pm-category').value= p.catId;
+    document.getElementById('pm-supplier').value= p.supId;
+    document.getElementById('pm-buy').value     = p.buy;
+    document.getElementById('pm-sell').value    = p.sell;
+    document.getElementById('pm-qty').value     = p.qty;
+    document.getElementById('pm-reorder').value = p.reorder;
+    document.getElementById('pm-unit').value    = p.unit;
+    document.getElementById('pm-expiry').value  = p.expiry||'';
+  } else {
+    ['pm-name','pm-barcode','pm-buy','pm-sell','pm-qty','pm-reorder','pm-unit','pm-expiry']
+      .forEach(i=>document.getElementById(i).value='');
+  }
+  openModal('modal-product');
+}
+
+function editProduct(id) { openProductModal(id); }
+
+function saveProduct() {
+  const name   = document.getElementById('pm-name').value.trim();
+  const barcode= document.getElementById('pm-barcode').value.trim();
+  const catId  = +document.getElementById('pm-category').value;
+  const supId  = +document.getElementById('pm-supplier').value;
+  const buy    = +document.getElementById('pm-buy').value;
+  const sell   = +document.getElementById('pm-sell').value;
+  const qty    = +document.getElementById('pm-qty').value;
+  const reorder= +document.getElementById('pm-reorder').value||20;
+  const unit   = document.getElementById('pm-unit').value||'pcs';
+  const expiry = document.getElementById('pm-expiry').value||null;
+
+  if (!name||!barcode||!buy||!sell) { showToast('Fill in required fields.','var(--red)'); return; }
+
+  if (editingProdId) {
+    const p = products.find(x=>x.id===editingProdId);
+    Object.assign(p,{name,barcode,catId,supId,buy,sell,qty,reorder,unit,expiry});
+    db.query('UPDATE products SET ... WHERE product_id=?',[editingProdId]);
+    showToast('Product updated!','var(--green)');
+  } else {
+    products.push({id:nextProdId++,name,barcode,catId,supId,buy,sell,qty,reorder,unit,expiry});
+    db.query('INSERT INTO products ...');
+    showToast('Product added!','var(--green)');
+  }
+
+  closeModal('modal-product');
+  renderProducts();
+  renderDashboard();
+}
+
+function deleteProduct(id) {
+  const p = products.find(x=>x.id===id);
+  confirmAction('Delete Product', `Delete "${p.name}"? This cannot be undone.`, () => {
+    products = products.filter(x=>x.id!==id);
+    db.query('DELETE FROM products WHERE product_id=?',[id]);
+    renderProducts();
+    renderDashboard();
+    showToast('Product deleted.','var(--red)');
+  });
+}
+
+/* ═══════════════════════════════════════════
+   TRANSACTIONS
+═══════════════════════════════════════════ */
+function renderTransactions() {
+  const search = document.getElementById('tx-search').value.toLowerCase();
+  const type   = document.getElementById('tx-type-filter').value;
+
+  let list = transactions.filter(t =>
+    (!search || getProdName(t.prodId).toLowerCase().includes(search))
+    && (!type || t.type===type)
+  );
+
+  document.getElementById('tx-tbody').innerHTML = list.map((t,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${t.date}</td>
+      <td>${getProdName(t.prodId)}</td>
+      <td class="${t.type==='IN'?'type-in':'type-out'}">${t.type}</td>
+      <td>${t.qty}</td>
+      <td>${peso(t.price)}</td>
+      <td>${peso(t.total)}</td>
+      <td>${getEmpName(t.empId)}</td>
+      <td>${t.remarks||'—'}</td>
+    </tr>`).join('');
+}
+
+function openTxModal(id=null) {
+  editingTxId = id;
+  document.getElementById('tx-modal-title').textContent = id ? 'Edit Transaction' : 'Add Transaction';
+  populateSelects();
+
+  if (id) {
+    const t = transactions.find(x=>x.id===id);
+    document.getElementById('tm-product').value  = t.prodId;
+    document.getElementById('tm-employee').value = t.empId;
+    document.getElementById('tm-type').value     = t.type;
+    document.getElementById('tm-qty').value      = t.qty;
+    document.getElementById('tm-date').value     = t.date;
+    document.getElementById('tm-price').value    = t.price;
+    document.getElementById('tm-remarks').value  = t.remarks||'';
+  } else {
+    ['tm-qty','tm-price','tm-remarks'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('tm-date').value = new Date().toISOString().slice(0,10);
+  }
+  openModal('modal-tx');
+}
+
+function saveTransaction() {
+  const prodId  = +document.getElementById('tm-product').value;
+  const empId   = +document.getElementById('tm-employee').value;
+  const type    = document.getElementById('tm-type').value;
+  const qty     = +document.getElementById('tm-qty').value;
+  const date    = document.getElementById('tm-date').value;
+  const price   = +document.getElementById('tm-price').value;
+  const remarks = document.getElementById('tm-remarks').value.trim();
+  const total   = qty*price;
+
+  if (!qty||!price||!date) { showToast('Fill in all fields.','var(--red)'); return; }
+
+  // Stock trigger simulation
+  const prod = products.find(p=>p.id===prodId);
+  if (prod) {
+    if (type==='OUT' && prod.qty < qty) { showToast('Insufficient stock!','var(--red)'); return; }
+    prod.qty += (type==='IN' ? qty : -qty);
+  }
+
+  if (editingTxId) {
+    const t = transactions.find(x=>x.id===editingTxId);
+    // Reverse old stock change
+    const oldProd = products.find(p=>p.id===t.prodId);
+    if (oldProd) oldProd.qty -= (t.type==='IN' ? t.qty : -t.qty);
+    Object.assign(t,{prodId,empId,type,qty,date,price,total,remarks});
+    db.query('UPDATE transactions SET ... WHERE transaction_id=?',[editingTxId]);
+    showToast('Transaction updated!','var(--green)');
+  } else {
+    transactions.push({id:nextTxId++,prodId,empId,type,qty,date,price,total,remarks});
+    db.query('INSERT INTO transactions ...');
+    showToast('Transaction saved!','var(--green)');
+  }
+
+  closeModal('modal-tx');
+  renderTransactions();
+  renderProducts();
+  renderDashboard();
+}
+
+/* ═══════════════════════════════════════════
+   USER MANAGEMENT
+═══════════════════════════════════════════ */
+function renderUsers() {
+  const search = document.getElementById('user-search').value.toLowerCase();
+  const role   = document.getElementById('user-role-filter').value;
+  const status = document.getElementById('user-status-filter').value;
+
+  let list = employees.filter(e =>
+    (!search || (e.fname+' '+e.lname).toLowerCase().includes(search) || e.email.toLowerCase().includes(search))
+    && (!role   || e.role===role)
+    && (!status || e.status===status)
+  );
+
+  document.getElementById('user-tbody').innerHTML = list.map((e,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><b>${e.fname} ${e.lname}</b><br><span class="text-sm">${e.username}</span></td>
+      <td>${e.role}</td>
+      <td>${e.email}</td>
+      <td>${e.hire}</td>
+      <td>${peso(e.salary)}</td>
+      <td>${statusBadge(e.status)}</td>
+      <td>
+        <div class="flex-row">
+          <button class="btn-sm btn-yellow" onclick="editUser(${e.id})">Edit</button>
+          <button class="btn-sm ${e.status==='Active'?'btn-gray':'btn-green'}"
+            onclick="toggleUserStatus(${e.id})">${e.status==='Active'?'Deactivate':'Activate'}</button>
+          <button class="btn-sm btn-red" onclick="deleteUser(${e.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openUserModal(id=null) {
+  editingEmpId = id;
+  document.getElementById('user-modal-title').textContent = id ? 'Update Account Profile' : 'Add Account';
+
+  if (id) {
+    const e = employees.find(x=>x.id===id);
+    document.getElementById('um-fname').value    = e.fname;
+    document.getElementById('um-lname').value    = e.lname;
+    document.getElementById('um-role').value     = e.role;
+    document.getElementById('um-email').value    = e.email;
+    document.getElementById('um-hire').value     = e.hire;
+    document.getElementById('um-salary').value   = e.salary;
+    document.getElementById('um-username').value = e.username;
+    document.getElementById('um-password').value = e.password;
+  } else {
+    ['um-fname','um-lname','um-email','um-hire','um-salary','um-username','um-password']
+      .forEach(i=>document.getElementById(i).value='');
+  }
+  openModal('modal-user');
+}
+
+function editUser(id) { openUserModal(id); }
+
+function saveUser() {
+  const fname   = document.getElementById('um-fname').value.trim();
+  const lname   = document.getElementById('um-lname').value.trim();
+  const role    = document.getElementById('um-role').value;
+  const email   = document.getElementById('um-email').value.trim();
+  const hire    = document.getElementById('um-hire').value;
+  const salary  = +document.getElementById('um-salary').value;
+  const username= document.getElementById('um-username').value.trim();
+  const password= document.getElementById('um-password').value;
+
+  if (!fname||!lname||!email||!username||!password) { showToast('Fill in all required fields.','var(--red)'); return; }
+
+  const dupUser = employees.find(e=>e.username===username && e.id!==editingEmpId);
+  if (dupUser) { showToast('Username already exists!','var(--red)'); return; }
+
+  if (editingEmpId) {
+    const e = employees.find(x=>x.id===editingEmpId);
+    Object.assign(e,{fname,lname,role,email,hire,salary,username,password});
+    db.query('UPDATE employees SET ... WHERE employee_id=?',[editingEmpId]);
+    showToast('Account updated!','var(--green)');
+  } else {
+    employees.push({id:nextEmpId++,fname,lname,role,email,hire,salary,username,password,status:'Active'});
+    db.query('INSERT INTO employees ...');
+    showToast('Account created!','var(--green)');
+  }
+
+  closeModal('modal-user');
+  renderUsers();
+  populateSelects();
+}
+
+function toggleUserStatus(id) {
+  const e = employees.find(x=>x.id===id);
+  const newStatus = e.status==='Active' ? 'Inactive' : 'Active';
+  const action    = newStatus==='Active' ? 'activate' : 'deactivate';
+  confirmAction(`${action.charAt(0).toUpperCase()+action.slice(1)} Account`,
+    `Are you sure you want to ${action} ${e.fname} ${e.lname}?`, () => {
+    e.status = newStatus;
+    db.query('UPDATE employees SET status=? WHERE employee_id=?',[newStatus,id]);
+    renderUsers();
+    showToast(`Account ${newStatus.toLowerCase()}d.`, newStatus==='Active'?'var(--green)':'var(--gray-400)');
+  });
+}
+
+function deleteUser(id) {
+  const e = employees.find(x=>x.id===id);
+  if (currentUser && currentUser.id===id) { showToast("You can't delete your own account!",'var(--red)'); return; }
+  confirmAction('Delete Account',`Delete "${e.fname} ${e.lname}"? This cannot be undone.`, () => {
+    employees = employees.filter(x=>x.id!==id);
+    db.query('DELETE FROM employees WHERE employee_id=?',[id]);
+    renderUsers();
+    showToast('Account deleted.','var(--red)');
+  });
+}
+
+/* ═══════════════════════════════════════════
+   REPORTS
+═══════════════════════════════════════════ */
+function generateReport() {
+  const type  = document.getElementById('rpt-type').value;
+  const from  = document.getElementById('rpt-from').value;
+  const to    = document.getElementById('rpt-to').value;
+  const cat   = document.getElementById('rpt-cat').value;
+  const emp   = document.getElementById('rpt-emp').value;
+
+  const preview = document.getElementById('rpt-preview');
+
+  if (type === 'Stock Levels') {
+    let list = products.filter(p => (!cat || p.catId==cat));
+    const rows = list.map((p,i)=>`<tr>
+      <td>${i+1}</td><td>${p.barcode}</td><td>${p.name}</td>
+      <td>${getCatName(p.catId)}</td><td>${getSupName(p.supId)}</td>
+      <td>${p.qty}</td><td>${p.unit}</td><td>${statusBadge(stockStatus(p))}</td>
+    </tr>`).join('');
+
+    preview.innerHTML = `
+      <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px;">STOCK LEVELS REPORT</h3>
+      <table>
+        <thead><tr><th>#</th><th>Barcode</th><th>Product</th><th>Category</th><th>Supplier</th>
+        <th>Qty</th><th>Unit</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    return;
+  }
+
+  const txType = type==='Sales Report' ? 'OUT' : 'IN';
+  let list = transactions.filter(t => {
+    const prod = products.find(p=>p.id===t.prodId);
+    return t.type===txType
+      && (!from || t.date>=from)
+      && (!to   || t.date<=to)
+      && (!cat  || (prod && prod.catId==cat))
+      && (!emp  || t.empId==emp);
+  });
+
+  const grandTotal = list.reduce((s,t)=>s+t.total,0);
+
+  const rows = list.map((t,i)=>`<tr>
+    <td>${i+1}</td><td>${t.date}</td><td>${getProdName(t.prodId)}</td>
+    <td>${getCatName((products.find(p=>p.id===t.prodId)||{}).catId)}</td>
+    <td>${t.qty}</td><td>${peso(t.price)}</td><td>${peso(t.total)}</td>
+    <td>${getEmpName(t.empId)}</td>
+  </tr>`).join('');
+
+  preview.innerHTML = `
+    <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px;">${type.toUpperCase()}</h3>
+    <table>
+      <thead><tr><th>#</th><th>Date</th><th>Product</th><th>Category</th>
+      <th>Qty</th><th>Unit Price</th><th>Total</th><th>Employee</th></tr></thead>
+      <tbody>
+        ${rows}
+        <tr class="total-row">
+          <td colspan="6"><b>TOTAL</b></td>
+          <td><b>${peso(grandTotal)}</b></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('card-login').classList.contains('active')) doLogin();
+  }
+});
+
+// Init report date defaults
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('rpt-from').value = '2024-01-01';
+document.getElementById('rpt-to').value   = today;
+
+console.log('[FreshMart] System initialized. DB connection:', db.connected ? 'OK' : 'FAILED');
+
+/* ═══════════════════════════════════════════
+   EXCEL EXPORT MODULE (Activity 6)
+═══════════════════════════════════════════ */
+
+// ── Shared: build a styled workbook header (rows array) ──
+function buildReportHeader(reportTitle, dateRange) {
+  const now = new Date().toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'});
+  const preparedBy = currentUser ? currentUser.fname + ' ' + currentUser.lname : 'System';
+  const role       = currentUser ? currentUser.role : '';
+  return [
+    ['FRESHMART MINIMART INFORMATION SYSTEM'],
+    ['Barangay 39, Bonot, Legazpi City, Albay 4500'],
+    ['Tel: 09476385363  |  Email: freshmart@gmail.com'],
+    [''],
+    [reportTitle],
+    [dateRange || ('As of: ' + now)],
+    [''],
+  ];
+}
+
+function buildSignatureBlock(title) {
+  const name = currentUser ? currentUser.fname + ' ' + currentUser.lname : '___________________';
+  const role = currentUser ? currentUser.role : '';
+  return [
+    [''],
+    [''],
+    ['Prepared by:',  '', '', 'Reviewed by:', '', '', 'Approved by:'],
+    [''],
+    [''],
+    ['___________________________', '', '', '___________________________', '', '', '___________________________'],
+    [name,            '', '', 'Store Supervisor',            '', '', 'Store Manager'],
+    [role,            '', '', '',                            '', '', ''],
+    ['Date: _______________', '', '', 'Date: _______________', '', '', 'Date: _______________'],
+  ];
+}
+
+// ── Apply basic column widths ──
+function autoWidth(ws, cols) {
+  ws['!cols'] = cols.map(w => ({ wch: w }));
+}
+
+// ── Style the header rows bold/centered (SheetJS CE supports basic cell props) ──
+function applyCellStyles(ws, numHeaderRows, numDataRows) {
+  // SheetJS community edition doesn't support full cell styles,
+  // but we mark the range so Excel renders it correctly
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  ws['!merges'] = ws['!merges'] || [];
+  // Merge title row across all columns
+  const lastCol = range.e.c;
+  ws['!merges'].push({ s:{r:0,c:0}, e:{r:0,c:lastCol} });
+  ws['!merges'].push({ s:{r:1,c:0}, e:{r:1,c:lastCol} });
+  ws['!merges'].push({ s:{r:2,c:0}, e:{r:2,c:lastCol} });
+  ws['!merges'].push({ s:{r:4,c:0}, e:{r:4,c:lastCol} });
+  ws['!merges'].push({ s:{r:5,c:0}, e:{r:5,c:lastCol} });
+}
+
+/* ─────────────────────────────────────────
+   EXPORT 1 — STOCK LEVELS (Products)
+───────────────────────────────────────── */
+function exportProductsExcel() {
+  const wb = XLSX.utils.book_new();
+  const now = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+
+  /* ── Sheet 1: Stock Levels Report ── */
+  const header = buildReportHeader('STOCK LEVELS REPORT', 'As of: ' + now);
+
+  const cols   = ['#','Barcode','Product Name','Category','Supplier','Buy Price (PHP)','Sell Price (PHP)','Qty','Unit','Reorder Lvl','Status'];
+  const rows   = products.map((p,i) => [
+    i+1, p.barcode, p.name, getCatName(p.catId), getSupName(p.supId),
+    p.buy, p.sell, p.qty, p.unit, p.reorder, stockStatus(p)
+  ]);
+
+  const totalStockVal = products.reduce((s,p)=>s+(p.buy*p.qty),0);
+  const summary = [
+    [''],
+    ['Total Products:', products.length, '', 'Total Stock Value (Buy):', 'PHP ' + totalStockVal.toLocaleString('en-PH',{minimumFractionDigits:2})],
+    ['Low / Out of Stock:', products.filter(p=>stockStatus(p)!=='Stock OK').length],
+  ];
+
+  const sig     = buildSignatureBlock('Stock Levels Report');
+  const ws1Data = [...header, cols, ...rows, ...summary, ...sig];
+  const ws1     = XLSX.utils.aoa_to_sheet(ws1Data);
+  autoWidth(ws1, [4,12,30,16,22,16,16,8,8,12,14]);
+  applyCellStyles(ws1, header.length, rows.length);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Stock Levels');
+
+  /* ── Sheet 2: Chart Data (by Category) ── */
+  const catSummary = [
+    ['CHART DATA — Products by Category'],
+    [''],
+    [''],
+    ['Category', 'Product Count', 'Total Qty', 'Stock Value (PHP)'],
+    ...categories.map(c => {
+      const prods = products.filter(p=>p.catId===c.id);
+      const qty   = prods.reduce((s,p)=>s+p.qty,0);
+      const val   = prods.reduce((s,p)=>s+(p.buy*p.qty),0);
+      return [c.name, prods.length, qty, val];
+    }),
+    [''],
+    ['Stock Status Summary', 'Count'],
+    ['Stock OK',      products.filter(p=>stockStatus(p)==='Stock OK').length],
+    ['Low Stock',     products.filter(p=>stockStatus(p)==='Low Stock').length],
+    ['Out of Stock',  products.filter(p=>stockStatus(p)==='Out of Stock').length],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(catSummary);
+  autoWidth(ws2, [28, 16, 14, 20]);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Chart Data');
+
+  XLSX.writeFile(wb, 'FreshMart_StockLevels_Report.xlsx');
+  showToast('Stock Levels Report exported!', 'var(--green)');
+}
+
+/* ─────────────────────────────────────────
+   EXPORT 2 — TRANSACTIONS (Sales + Restock)
+───────────────────────────────────────── */
+function exportTransactionsExcel() {
+  const wb  = XLSX.utils.book_new();
+  const now = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+
+  const allTx = transactions;
+  const sales  = allTx.filter(t=>t.type==='OUT');
+  const restock= allTx.filter(t=>t.type==='IN');
+
+  /* ── Sheet 1: Sales Transactions ── */
+  const salesHeader = buildReportHeader('SALES TRANSACTIONS REPORT', 'As of: ' + now);
+  const salesCols   = ['#','Date','Product','Category','Qty','Unit Price (PHP)','Total (PHP)','Handled By','Remarks'];
+  const salesRows   = sales.map((t,i)=>{
+    const prod = products.find(p=>p.id===t.prodId)||{};
+    return [i+1, t.date, getProdName(t.prodId), getCatName(prod.catId), t.qty, t.price, t.total, getEmpName(t.empId), t.remarks||''];
+  });
+  const salesTotal  = sales.reduce((s,t)=>s+t.total,0);
+  const salesSum    = [[''],['','','','','','GRAND TOTAL (PHP):', salesTotal]];
+  const salesSig    = buildSignatureBlock('Sales Transactions');
+
+  const ws1Data = [...salesHeader, salesCols, ...salesRows, ...salesSum, ...salesSig];
+  const ws1     = XLSX.utils.aoa_to_sheet(ws1Data);
+  autoWidth(ws1, [4,12,30,16,8,16,16,22,30]);
+  applyCellStyles(ws1, salesHeader.length, salesRows.length);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Sales Report');
+
+  /* ── Sheet 2: Restock Transactions ── */
+  const restockHeader = buildReportHeader('RESTOCK / PURCHASE REPORT', 'As of: ' + now);
+  const restockCols   = ['#','Date','Product','Category','Qty','Unit Price (PHP)','Total (PHP)','Handled By','Remarks'];
+  const restockRows   = restock.map((t,i)=>{
+    const prod = products.find(p=>p.id===t.prodId)||{};
+    return [i+1, t.date, getProdName(t.prodId), getCatName(prod.catId), t.qty, t.price, t.total, getEmpName(t.empId), t.remarks||''];
+  });
+  const restockTotal  = restock.reduce((s,t)=>s+t.total,0);
+  const restockSum    = [[''],['','','','','','GRAND TOTAL (PHP):', restockTotal]];
+  const restockSig    = buildSignatureBlock('Restock Report');
+
+  const ws2Data = [...restockHeader, restockCols, ...restockRows, ...restockSum, ...restockSig];
+  const ws2     = XLSX.utils.aoa_to_sheet(ws2Data);
+  autoWidth(ws2, [4,12,30,16,8,16,16,22,30]);
+  applyCellStyles(ws2, restockHeader.length, restockRows.length);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Restock Report');
+
+  /* ── Sheet 3: Chart Data ── */
+  // Monthly sales totals
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlySales = monthNames.map((m,i) => {
+    const mo = String(i+1).padStart(2,'0');
+    const total = allTx.filter(t=>t.type==='OUT' && t.date.includes('-'+mo+'-')).reduce((s,t)=>s+t.total,0);
+    return [m, total];
+  });
+
+  const chartData = [
+    ['CHART DATA — Monthly Sales'],
+    [''],
+    [''],
+    ['Month', 'Sales Total (PHP)'],
+    ...monthlySales,
+    [''],
+    ['Transaction Type Summary', 'Count', 'Total Value (PHP)'],
+    ['Sales (OUT)',   sales.length,   sales.reduce((s,t)=>s+t.total,0)],
+    ['Restock (IN)',  restock.length, restock.reduce((s,t)=>s+t.total,0)],
+  ];
+
+  const ws3 = XLSX.utils.aoa_to_sheet(chartData);
+  autoWidth(ws3, [28, 20, 20]);
+  XLSX.utils.book_append_sheet(wb, ws3, 'Chart Data');
+
+  XLSX.writeFile(wb, 'FreshMart_Transactions_Report.xlsx');
+  showToast('Transactions Report exported!', 'var(--green)');
+}
+
+/* ─────────────────────────────────────────
+   EXPORT 3 — FILTERED REPORT (Reports Page)
+───────────────────────────────────────── */
+function exportReportExcel() {
+  const type = document.getElementById('rpt-type').value;
+  const from = document.getElementById('rpt-from').value;
+  const to   = document.getElementById('rpt-to').value;
+  const cat  = document.getElementById('rpt-cat').value;
+  const emp  = document.getElementById('rpt-emp').value;
+
+  const wb  = XLSX.utils.book_new();
+  const dateRange = (from && to) ? `Date Range: ${from} to ${to}` : ('As of: ' + new Date().toLocaleDateString('en-PH'));
+
+  /* ── Sheet 1: Report Data ── */
+  let ws1Data, ws1, ws2Data, ws2;
+
+  if (type === 'Stock Levels') {
+    const header = buildReportHeader('STOCK LEVELS REPORT', dateRange);
+    const cols   = ['#','Barcode','Product Name','Category','Supplier','Qty','Unit','Status'];
+    let list     = products.filter(p => !cat || p.catId == cat);
+    const rows   = list.map((p,i) => [i+1, p.barcode, p.name, getCatName(p.catId), getSupName(p.supId), p.qty, p.unit, stockStatus(p)]);
+    const sig    = buildSignatureBlock(type);
+    ws1Data = [...header, cols, ...rows, [''], ...sig];
+    ws1     = XLSX.utils.aoa_to_sheet(ws1Data);
+    autoWidth(ws1, [4,12,30,16,22,8,8,14]);
+    applyCellStyles(ws1, header.length, rows.length);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Stock Levels');
+
+    // Chart Data sheet
+    const catCounts = categories.map(c => {
+      const prods = list.filter(p=>p.catId===c.id);
+      return [c.name, prods.length, prods.reduce((s,p)=>s+p.qty,0)];
+    }).filter(r=>r[1]>0);
+    ws2Data = [
+      ['CHART DATA — Stock by Category'],
+      [''],
+      [''],
+      ['Category','Product Count','Total Qty'],
+      ...catCounts,
+      [''],
+      ['Status','Count'],
+      ['Stock OK',     list.filter(p=>stockStatus(p)==='Stock OK').length],
+      ['Low Stock',    list.filter(p=>stockStatus(p)==='Low Stock').length],
+      ['Out of Stock', list.filter(p=>stockStatus(p)==='Out of Stock').length],
+    ];
+
+  } else {
+    const txType = type === 'Sales Report' ? 'OUT' : 'IN';
+    const label  = type === 'Sales Report' ? 'SALES REPORT' : 'RESTOCK / PURCHASE REPORT';
+    const header = buildReportHeader(label, dateRange);
+    const cols   = ['#','Date','Product','Category','Qty','Unit Price (PHP)','Total (PHP)','Employee'];
+
+    let list = transactions.filter(t => {
+      const prod = products.find(p=>p.id===t.prodId);
+      return t.type===txType
+        && (!from || t.date>=from)
+        && (!to   || t.date<=to)
+        && (!cat  || (prod && prod.catId==cat))
+        && (!emp  || t.empId==emp);
+    });
+
+    const rows     = list.map((t,i)=>{
+      const prod = products.find(p=>p.id===t.prodId)||{};
+      return [i+1, t.date, getProdName(t.prodId), getCatName(prod.catId), t.qty, t.price, t.total, getEmpName(t.empId)];
+    });
+    const grandTotal = list.reduce((s,t)=>s+t.total,0);
+    const totalRow   = [[''],['','','','','','GRAND TOTAL (PHP):', grandTotal]];
+    const sig        = buildSignatureBlock(type);
+
+    ws1Data = [...header, cols, ...rows, ...totalRow, ...sig];
+    ws1     = XLSX.utils.aoa_to_sheet(ws1Data);
+    autoWidth(ws1, [4,12,30,16,8,16,16,22]);
+    applyCellStyles(ws1, header.length, rows.length);
+    XLSX.utils.book_append_sheet(wb, ws1, type.replace(' ','_'));
+
+    // Chart Data: monthly breakdown
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlyTotals = monthNames.map((m,i) => {
+      const mo = String(i+1).padStart(2,'0');
+      const total = list.filter(t=>t.date.includes('-'+mo+'-')).reduce((s,t)=>s+t.total,0);
+      return [m, total];
+    });
+
+    ws2Data = [
+      ['CHART DATA — Monthly ' + (type==='Sales Report'?'Sales':'Restock') + ' Totals'],
+      [''],
+      [''],
+      ['Month', 'Total (PHP)'],
+      ...monthlyTotals,
+      [''],
+      ['Summary', 'Value'],
+      ['Total Records:', list.length],
+      ['Grand Total (PHP):', grandTotal],
+    ];
+  }
+
+  ws2 = XLSX.utils.aoa_to_sheet(ws2Data);
+  autoWidth(ws2, [28,20,20]);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Chart Data');
+
+  const filename = 'FreshMart_' + type.replace(/ /g,'_') + '_' + new Date().toISOString().slice(0,10) + '.xlsx';
+  XLSX.writeFile(wb, filename);
+  showToast(type + ' exported!', 'var(--green)');
+}
+</script>
+</body>
+</html>
